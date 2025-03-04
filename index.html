@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mental Health Assistant / मानसिक स्वास्थ्य सहायक</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .chat-container {
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            padding: 20px;
+            height: 400px;
+            overflow-y: auto;
+            margin-bottom: 20px;
+        }
+        .message {
+            margin-bottom: 15px;
+            padding: 10px;
+            border-radius: 5px;
+        }
+        .user-message {
+            background-color: #e6f7ff;
+            text-align: right;
+        }
+        .bot-message {
+            background-color: #f0f0f0;
+        }
+        .input-container {
+            display: flex;
+        }
+        #user-input {
+            flex-grow: 1;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        button {
+            padding: 10px 20px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            margin-left: 10px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        .loading {
+            display: inline-block;
+            margin-left: 10px;
+        }
+        .language-toggle {
+            margin-bottom: 15px;
+            text-align: right;
+        }
+        .help-section {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #f9f9f9;
+            border-radius: 5px;
+            border: 1px solid #eee;
+        }
+        .help-section h3 {
+            margin-top: 0;
+        }
+        .help-section ul {
+            columns: 2;
+            -webkit-columns: 2;
+            -moz-columns: 2;
+        }
+        @media (max-width: 600px) {
+            .help-section ul {
+                columns: 1;
+                -webkit-columns: 1;
+                -moz-columns: 1;
+            }
+        }
+    </style>
+</head>
+<body>
+    <h1>Mental Health Assistant / मानसिक स्वास्थ्य सहायक</h1>
+    <p>Share your thoughts and feelings, and I'll do my best to help. / अपने विचार और भावनाएं साझा करें, और मैं मदद करने की पूरी कोशिश करूंगा।</p>
+    
+    <div class="chat-container" id="chat-container">
+        <div class="message bot-message">
+            Hello! I'm your mental health assistant. How are you feeling today? / नमस्ते! मैं आपका मानसिक स्वास्थ्य सहायक हूं। आज आप कैसा महसूस कर रहे हैं?
+        </div>
+    </div>
+    
+    <div class="input-container">
+        <input type="text" id="user-input" placeholder="Type your message here... / अपना संदेश यहां टाइप करें...">
+        <button id="send-button" onclick="sendMessage()">Send / भेजें</button>
+        <span id="loading" class="loading" style="display: none;">Thinking... / सोच रहा हूं...</span>
+    </div>
+
+    <div class="help-section">
+        <h3>Suggested Topics / सुझाए गए विषय</h3>
+        <p>Try asking about these feelings in English or Hindi: / इन भावनाओं के बारे में अंग्रेजी या हिंदी में पूछने का प्रयास करें:</p>
+        <ul>
+            <li>Happy / खुश</li>
+            <li>Sad / दुखी</li>
+            <li>Anxious / चिंतित</li>
+            <li>Stressed / तनावग्रस्त</li>
+            <li>Tired / थका</li>
+            <li>Angry / गुस्सा</li>
+            <li>Lonely / अकेला</li>
+            <li>Confused / भ्रमित</li>
+            <li>Hopeful / आशावान</li>
+            <li>Afraid / डरा हुआ</li>
+            <li>Grateful / आभारी</li>
+            <li>Excited / उत्साहित</li>
+        </ul>
+    </div>
+
+    <script>
+        function sendMessage() {
+            const userInput = document.getElementById('user-input');
+            const chatContainer = document.getElementById('chat-container');
+            const sendButton = document.getElementById('send-button');
+            const loadingIndicator = document.getElementById('loading');
+            const message = userInput.value.trim();
+            
+            if (message === '') return;
+            
+            // Add user message to chat
+            const userMessageDiv = document.createElement('div');
+            userMessageDiv.className = 'message user-message';
+            userMessageDiv.textContent = message;
+            chatContainer.appendChild(userMessageDiv);
+            
+            // Clear input field
+            userInput.value = '';
+            
+            // Disable button and show loading indicator
+            sendButton.disabled = true;
+            loadingIndicator.style.display = 'inline-block';
+            
+            // Scroll to bottom of chat
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+            
+            // Send message to server
+            fetch('/api/bot', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ message: message }),
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok: ' + response.statusText);
+                }
+                return response.json();
+            })
+            .then(data => {
+                // Add bot response to chat
+                const botMessageDiv = document.createElement('div');
+                botMessageDiv.className = 'message bot-message';
+                
+                if (data.error) {
+                    botMessageDiv.textContent = 'Sorry, I encountered an error: ' + data.error;
+                } else {
+                    botMessageDiv.textContent = data.response;
+                }
+                
+                chatContainer.appendChild(botMessageDiv);
+                
+                // Scroll to bottom of chat
+                chatContainer.scrollTop = chatContainer.scrollHeight;
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                
+                // Add error message to chat
+                const botMessageDiv = document.createElement('div');
+                botMessageDiv.className = 'message bot-message';
+                botMessageDiv.textContent = 'Sorry, I encountered an error connecting to the server. Please try again. / क्षमा करें, मुझे सर्वर से कनेक्ट करने में एक त्रुटि मिली। कृपया पुनः प्रयास करें।';
+                chatContainer.appendChild(botMessageDiv);
+                
+                // Scroll to bottom of chat
+                chatContainer.scrollTop = chatContainer.scrollHeight;
+            })
+            .finally(() => {
+                // Re-enable button and hide loading indicator
+                sendButton.disabled = false;
+                loadingIndicator.style.display = 'none';
+            });
+        }
+        
+        // Allow sending message with Enter key
+        document.getElementById('user-input').addEventListener('keypress', function(event) {
+            if (event.key === 'Enter') {
+                sendMessage();
+            }
+        });
+    </script>
+</body>
+</html>
